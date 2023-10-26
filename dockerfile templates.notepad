@@ -1,0 +1,1 @@
+{"bgColorIndex":0,"textColorIndex":1,"note":"for java script\n\nFROM node:\nRUN mkdir -p \/home\/app\nCOPY . \/home\/app \nCMD [ \"node\", “\/home\/app\/server.js\" ]\n\n\nfor python\n\nFROM python:3.10-slim \nRUN apt-get update\nRUN apt-get install -y\nWORKDIR \/usr \/app\nCOPY\nRUN pip install -r requirements.txt\nCMD [ \"python\", \"app.py\" ]"}

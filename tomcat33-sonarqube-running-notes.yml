@@ -1,0 +1,794 @@
+Application Deploment. 
+How to deploy java based applications:
+maven-standalone-application
+   java -jar appName.jar 
+        .jar
+    java -jar packageName.jar
+    java -jar user-banking.jar 
+      java openJDK 1.7+
+
+maven-web-application  :
+java based web-application  :
+    app.war / *.war / paypal.war  
+    Tomcat
+    JBoss/WildFly
+
+maven-enterprise-application
+java based enterprise application  :
+    app.ear / paypal.ear  
+    JBoss/WildFly
+ aa.com,  
+
+60musers -----> boa.war  
+GitHub---->Maven[boa.war]---->appServer 
+80musers ------->  appServer
+
+multi-tier applications Deploment:
+
+60mUsers ------> appServers 
+
+                frontend tier    backend tiers
+            webServers/LBTier    appTier      dbTier
+ users(60m) -->webServers/LB -->appServer-->database  :
+                                      userName/
+                                      Password/
+                                      addresses/
+                                      SSN/DOB/tel   
+
+multi-tier applications :
+  backend tiers :  
+     : High security   = Militarised zone = MZ 
+      applications tier 
+      data base tier  
+   frontend tier  : Medium security = D-Militarised zone = DMZ 
+      webServers-- 
+      LoadBalancers
+      JumpServers  
+
+60musers -----> webServers/LB ------> appServers   
+
+Application Server: 
+IBM WebSphere Application Server (WAS)  --> IBM
+Apache Tomcat:   --> Apache  --> OS
+
+JBoss/WildFly:   --> Redhat/IBM 
+    1.0.0 to 7.0.9
+    1.x to 7.x --> JBoss
+    from 8.x-->    WildFly
+         versioning  
+    git branch and git tag 
+
+WebLogic --> Oracle  :
+
+IQ: What is the d/f b/w JBoss/WildFly and Tomcat? 
+    vendors: Tomcat==Apache  
+             JBoss=Redhat  
+    Applications:          
+        JBoss; Web applications .WAR 
+               enterprise applications .ear 
+        Tomcat; web applications ONLY 
+============================
+Tomcat Installation:
+---------------------
+https://tomcat.apache.org/download-90.cgi
+https://github.com/LandmakTechnology/package-management/blob/master/Tomcat-installation/READme.md
+https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.80/bin/apache-tomcat-9.0.80.zip
+
+publicIP =  34.219.51.216
+username =  ec2-user   
+sshPrivateKey = c32.pem  
+
+ssh -i c32.pem ec2-user@34.219.51.216   
+
+ssh -i "c32.pem" ec2-user@ec2-34-219-51-216.us-west-2.compute.amazonaws.com
+
+
+maven server:
+  IP = 52.25.10.4   
+
+[ec2-user@tomcat tomcat9]$ sh /opt/tomcat9/bin/startup.sh 
+   absolute path starting the root directory    
+
+[ec2-user@tomcat tomcat9]$ sh startup.sh
+   relative path starting the pwd
+
+[ec2-user@tomcat tomcat9]$ sh startup.sh
+sh: startup.sh: No such file or directory    
+
+# create a soft link to start and stop tomcat from anywhere
+# This will enable us to manage tomcat as a service
+sudo ln -s /opt/tomcat9/bin/startup.sh /usr/bin/starttomcat
+sudo ln -s /opt/tomcat9/bin/shutdown.sh /usr/bin/stoptomcat
+starttomcat
+sudo su - ec2-user
+
+ publicIP =  34.219.51.216 
+ Tomcat portNumber = 8080  
+  curl -v 34.219.51.216:8080   
+  curl -v localhost:8080 
+
+Tomcat Home directory - THD = /opt/tomcat9
+THD: The Tomcat Home Directory is 
+     where the tomcat software is extracted 
+        wget to download tomcat  
+        unzip  to extract
+Explain the content of the THD.  :
+  [ec2-user@tomcat tomcat9]$ pwd
+/opt/tomcat9
+[ec2-user@tomcat tomcat9]$ ls
+    bin :
+    bin: --- binary files  
+      startup.sh    --->  LINUX SYSTEM
+      startup.bat   ----> WINDOWS OS
+      shutdown.sh
+      shutdown.bat     ----> WINDOWS OS
+      catalina.sh start
+      catalina.sh stop | start | restart | status  
+      version.sh
+      version.bat           
+    conf:
+      server.xml          
+      tomcat-users.xml               
+    lib :
+        contain all the jar files
+
+    logs :
+      catalina.out
+      host-manager.log
+IQ:  What are the log files available in the tomcat log dir?
+      catalina.out
+      host-manager.log        
+    webapps:
+      we effect deployments in Tomcat in the webapps Directory
+      The default deployment Directory in Tomcat is = webapps 
+        war files
+        maven-web-app.war  # mvn package 
+        maven-web-app
+        cp *.war /webapps
+        cp *war   /opt/tomcat9/webapps/maven-web-app.war
+    temp         
+    work
+
+ Verify if the tomcat service/process is running:
+    ps -ef | grep tomcat  
+    telnet localhost 8080 
+    curl -v localhost:8080 
+    curl -v 34.219.51.216:8080
+    curl -v 34.219.51.216:8177
+Ticket:
+  Change the default portNumber for tomcat from 8080 to 8177 
+
+  vim /opt/tomcat9/conf/server.xml  
+      <Connector port="8177" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443"
+               maxParameterCount="1000"
+               />
+
+http://34.219.51.216:8177/
+
+403 Access Denied
+
+configure tomcat server:
+ 1.  Enable external tomcat mgt access
+     vim /opt/tomcat9/webapps/manager/META-INF/context.xml
+
+from:
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+          allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /
+to:
+<!--
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+          allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /
+-->
+
+2. create tomcat users with access roles  :
+vim /opt/tomcat9/conf/tomcat-users.xml  =# to add user
+vi /opt/tomcat9/conf/tomcat-users.xml
+
+<user username="landmark" password="admin123" roles="manager-gui,admin-gui,manager-script"/>
+<user username="simon" password="admin123" roles="admin-gui"/> 
+
+https://github.com/LandmakTechnology/package-management/blob/master/Tomcat-installation/install-tomcat.sh
+
+
+http://34.219.51.216:8177/maven-web-app/
+
+webapps Directory:
+   git clone https://github.com/LandmakTechnology/maven-web-application
+
+  scp -i c32.pem  target/*war ec2-user@34.219.51.216:/opt/tomcat9/webapps/app.war    
+  scp target/*war ec2-user@34.219.51.216:/opt/tomcat9/webapps/  
+
+configure password authentication:
+  1. sudo vi /etc/ssh/sshd_config 
+       change password authentication no to yes   
+  2. sudo sustemctl restart sshd   
+  3. assign password 
+     sudo passwd username  
+
+HotFixes:
+  Class34 will start on Oct 14, 2023.
+  We are raising millionaires in IT globally.   
+
+ vi /opt/tomcat9/webapps/tesla/jsps/home.jsp
+
+  Port no or server addresses:
+    80  -- http
+    443 -- https
+    8080 -- Jenkins / Tomcat  / JBoss
+    0-1024 -- Reserve ports
+    1025-65535  
+    465 --- SMTP
+    587  --- SMTP
+    22   --- ssh
+    23   -- ftp
+a server has 65536 ports/addresses    
+
+How to improve tomcat server performance?
+  Multiple deployments will reduce tomcat server performance.
+  Multiple requests on a single tomcat server will affect performance
+  The resource level or computing capacity OF   your tomcat server   
+    SERVER1 =  8GB RAM,   480GB Hard drive HDD 
+    SERVER2 =  64GB RAM,  4000GB Hard drive SSD   
+
+  01 appServer  
+  10 appServers  
+
+  heapsize = 64mb -- 128mb/256mb    
+
+tomcat summary:
+1. tomcat can be install on any platform:
+     [Linux/Windows/macOS, Solaris]
+
+
+2. verify if tomcat is running by:
+     ps -ef | grep tomcat
+     telnet localhost 8080 
+     curl localhost:8080 
+     curl 18.234.79.178:8080    
+
+     ps -ef | grep tomcat
+     telnet localhost 8177 
+     curl localhost:8177 
+     curl publicIP:tomcatPortNumber   
+
+3. RBAC -  role based access control           :
+    tomcat-users.xml file  
+      simon    [username/password/roles]
+      dominion  
+      landmark    
+      amaka  
+
+<user username="landmark" password="admin123" roles="role1"/>
+<user username="landmark" password="admin" roles="manager-gui,admin-gui,manager-script"/>
+<user username="dominion" password="admin1" roles="manager-gui,admin-gui"/>
+<user username="amaka" password="admin2" roles="admin-gui"/>
+
+4. where and/or How does deployment take place in tomcat
+   deployment takes place in the webapps Directory 
+   by copying the *war file in the webapps Directory
+    ls /opt/tomcat9 = bin conf webapps   
+
+scp target/tesla.war landmark@18.234.79.178:/opt/tomcat9/webapps/  
+scp target/*war landmark@18.234.79.178:/opt/tomcat9/webapps/ 
+
+scp target/*war landmark@18.234.79.178:/tmp  
+scp target/*war landmark@18.234.79.178:/home/ec2-user    
+
+scp target/tesla.war landmark@18.234.79.178:/home/ec2-user/   
+  cp /home/ec2-user/tesla.war /opt/tomcat9/webapps/ 
+
+scp tesla.war landmark@18.234.79.178:/opt/tomcat9/webapps/  
+scp -i key.pem tesla.war landmark@18.234.79.178:/opt/tomcat9/webapps/
+
+scp target/*war landmark@54.166.85.32:/tmp 
+
+4. Performing hotfixes 
+    vi /opt/tomcat9/webapps/app/jsps/home.jsp
+
+5. enhancing/tunning up the performance of our tomcat servers  
+   by increasing the heap size
+===================================================
+===========
+webservers:
+===========
+nginx  
+Apache http  
+Ticket0014: Write a script to deploy apache webServer  
+[root@tomcat ~]# cat apache.sh
+#!/bin/sh
+# install apache as the admin/root user
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo Devops is good > /var/www/html/index.html
+echo "<h1> and easy with Landmark </h1>""   >> /var/www/html/index.html
+mkdir /var/www/html/google
+echo "<h1> Landmark Google </h1>"   >> /var/www/html/google/index.html
+ps -ef | grep httpd
+systemctl status httpd
+
+34.219.51.216
+
+http://34.219.51.216/
+http://34.219.51.216/google  
+
+  https://youtu.be/yL5NbByOs4c
+
+SONARQUBE:
+CodeQuality with SonarQube and SonarCloud
+===========================================
+CodeQuality
+============
+Develop -----> Tesla[appServers]
+Develop -----> Build---> deployment[appServers]
+
+Software testing:
+   Unit testing [JUnit]
+     helloWorld.java     =  5000 lines of code     
+     helloWorldTest.java =  5000 JUnitTestCases expected 
+  
+   Functional testing 
+   
+   Regression testing [v1/v2/v3/v4---v5] 4,000/800 Lines 
+     4000 lines 
+     800  Lines added  
+
+  Performance testing = 
+                mylandmarktech.com/join 
+                mylandmarktech.com/live 
+                mylandmarktech.com/payment
+                boa.com/login  
+
+  Penetration = mylandmarktech.com/login = userName/Password  
+                td.com/login  
+                boa.com/login = dominion/  
+                td.com/login 
+                   userName = landmark45    
+                   Password = abcdef / Admin@987..#@153    
+                   sendCode to your phone/email  
+
+Code Quality tools:
+ sonarqube
+ sonarcloud  
+ reshaper
+ codacy 
+ checkmarks 
+
+➢ It will identify the below category of issues.
+• Duplicated code
+• Coding standards
+• Unit tests
+• Complex code
+• Comments
+• Potential Bugs
+• Architecture & Design
+
+ javaProjects 
+   git/GitHub  
+   src Codes: app.java             10,000 lines of code  
+   JUnitTestsCases: appTest.java    4,000 unit test cases  
+   buildScript-pom.xml: 
+
+maven = mvn package: 
+  1. validate 
+  2. compiles [app.java ---> app.class] 
+  3. testing [runUnitTesting] = fails 
+  4. no packages will be created 
+
+mvn package:  
+  1. validate
+  2. compiles 
+  3. testing [run Unit Testing = passed
+  4. packages will be created   
+
+There is a quality gate in maven.  
+
+src               = 10,000L  
+Junit-Test-Cases  =  4,000L  
+CODE COVERAGE     =  4,000/10,000 * 100 = 40%  
+Developers have tested ONLY 40% of their job/Softwares 
+This could result to poor quality Software developed.  
+
+IQ: Tell us a project/change you introduce in your environment 
+    which you are proud of.
+    Answer = I introduce sonarqube for code quality 
+
+CodeQuality Benchmarks:
+sonarqube/Benchmarking for CodeQuality:
+Standards for CodeQuality :
+  1. code covergae   = 80% plus 
+  2. code smells     = less than 5  
+  3. bugs            = 0   
+  4. vulnerabilities = 0  
+  5. portability     = high   
+  6. duplicate lines = less than 5%  [ functions ]  
+ name=paul 
+ echo "My name is $name"
+ 
+ echo 'WHAT IS YOUR NAME'
+ read name
+ echo "welcome $name"
+ code smells can be the duplicate code, dead code
+
+
+Standards:
+1000 lines of code, Developers should write and execute atleast 800 Junit-Test-Cases
+
+actual results:
+1000 lines of code, Developers wrote and executed atleast 900 Junit-Test-Cases
+1000 lines of code, Developers wrote and executed atleast 600 Junit-Test-Cases
+
+comparing actual results against the benchmark/standards is analysis:
+1. How many unit test cases were run?
+   How many test cases should have been run? 
+
+2. Is our code readable with ease? 
+    ----> code smells 
+
+3. Is our code portable [ environment independent ]?
+    -- if not code smells / hard coding 
+
+4. Are there vulnerabilities in the code ?
+    ---> if they are then --- 
+       password -- any 4 characters 
+
+Benchmark/standards for a quality Software/application:
+1. Code coverage should be greater than 85%  
+2. Dublicate lines should be less than 5% 
+3. There should be no vulnerabilities in the code [pw=1234] 
+4. Code smells should be less than 5  
+
+Code Quality expectations:
+• Duplicated code  --- Functions
+• Coding standards ---  
+• Unit tests
+• Complex code --- 
+• Comments
+• Potential Bugs
+• Architecture & Design
+
+                                CodeQuality Reports:
+                   Standard     actual   results
+Code coverage        >85%        70%      Fail 
+Duplicate Codes      <5%         15%      Fail  
+Bugs                 3            10      Fail 
+
+SonarQube comprises of:
+  1. sonarqube Scanner: 
+  2. sonarqube server :
+       Compute engine 
+       database - h2 database
+       search engine - elasticsearch
+       web-server 
+Databases:
+1. mySQL = RDS   = Relational databases
+  generally data is structured and stored in tables[rows and columns] format
+  SQL is a langague use to qwery  RDS.   :
+  SQL = structured qwery langaguage  
+    Oracle
+    mySQL  - OS
+    PostgreSql  - OS
+    MSSQL (MicrosoftSQL)
+    DB2
+    Sybase
+    MySQL, Oracle, Microsoft SQL Server, PostgreSQL 
+     USES ROWS AND columns :
+SN    NAME       ID-no
+1001  Paul       LT0147   user1
+1002  Amaka      LT0155   user2  
+1003  Simon      LT0163   user3  
+1004  Landmark   LT0171   user4 
+1005  Dominion   LT0179   user5
+1006  Isaac      LT0187   user6
+1007  James      LT0195   user7
+
+2. noSQL = noRDS = non Relational databases
+  user1 = name/tel/address  
+  user2 = name/ssn/date of birth  
+  user3 = place of birth / profession / tel
+   generally data is unstructured and stored in JSON format  
+Examples:
+    MongoDB ---
+    Cassandra
+    CouchDB, 
+    CouchBase, 
+    HBase, 
+    Redis, 
+    Riak, 
+    Neo4J are the popular NoSQL databases.
+
+UnStructured data:
+  user1:   FirstName=Simon 
+  user2:   ID=01245
+  user3:   dob=01/01/1980 
+  user4:   tel=12457861
+  user1:   LastName=Amaka 
+  user100: email=100@hotmail.com
+
+users{
+  user1{
+    FirstName: simon 
+  }
+  user2{
+    ID: 01245
+  }
+  user3{
+    dob: 01/01/1980 
+  }
+}
+
+Installation of sonarqube:
+  https://docs.sonarqube.org/latest/requirements/requirements/
+  https://www.sonarqube.org/downloads/
+https://github.com/LandmakTechnology/package-management/tree/master/soarQube-Installation
+
+ server-IP = 34.213.64.100
+ userName  = ec2-user  
+ ssh-privateKey= c32.pem
+
+ ssh -i c32.pem  ec2-user@34.213.64.100   
+
+ 34.213.64.100:9000
+ http://34.213.64.100:9000/about
+
+ publicIP:9000
+ 34.213.64.100:9000
+curl -v localhost:9000
+
+34.213.64.100:9000
+default USERNAME: admin
+default password: admin
+
+/opt/sonarqube  
+SonarQube Home directory = :
+What is the sonarqube home directory?
+This is where the sonarqube Software is extracted = /opt/sonarqube
+wget and unzip 
+    /opt/sonarqube  
+   /opt/sonar
+   /app/sonar
+
+ls
+bin:
+  binary files / sonar.sh 
+  sh sonar.sh [start|status|stop|restart ]  
+  sh /opt/sonarqube/bin/linux-x86-64/sonar.sh [start|status|stop|restart] 
+  sh /opt/sonarqube/bin/linux-x86-64/sonar.sh status     
+
+conf:  
+  sonar.properties
+COPYING  
+data  
+elasticsearch  
+extensions  
+lib  
+logs  
+temp  
+web
+
+versions of sonarqube:
+enterprise version 
+datacenter version   
+Free version  :
+  Java,  = 30,000 lines 
+  JavaScript,
+  C#, 
+  TypeScript,
+  Kotlin,
+  Ruby, Go, Scala, Flex, Python, PHP, HTML, CSS, XML and 
+  VB.NET
+
+Project for TESLA0045:
+======================
+https://github.com/LandmakTechnology/maven-web-application
+1. Developers commit/push code to SCM = github   
+2. Test + Build using maven  
+    mvn package 
+
+3. CodeQuality analysis with SonarQube  = mvn sonar:sonar   :
+   comparing actual results against the benchnark/standards
+    mvn sonar:sonar   
+         1. goal = Sonar  
+         2. plugin = sonar
+    vi into pom.xml in the maven server and enter sonarqube server   
+     credentials under the properties tag  
+    connect to your sonarQube server from the browser 
+      login_username= admin 
+      login_password= admin 
+
+    publicIP  =   34.213.64.100  
+    privateIP =   172.0.0.7
+    SONARQUBEportNumber = 9000 
+
+
+        <properties>
+                <jdk.version>1.8</jdk.version>
+                <spring.version>5.1.2.RELEASE</spring.version>
+                <junit.version>4.11</junit.version>
+                <log4j.version>1.2.17</log4j.version>
+                <sonar.host.url>http:172.0.0.7:9000/</sonar.host.url>
+                <sonar.login>admin</sonar.login>
+                <sonar.password>admin</sonar.password>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        </properties>
+
+ [ERROR] SonarQube server [http:54.175.245.26:9000] can not be reached
+
+http error code 400 errors = client side     
+  400 / 401 / 402 / 403  
+Not authorized.
+ Not authorized. 
+Please check the properties sonar.login and sonar.password.
+
+ANALYSIS SUCCESSFUL, you can browse http://172.0.0.7:9000/dashboard?id=com.mt%3Amaven-web-application
+
+SonarQube 2b running notes starts  
+==================================
+
+results:
+Coverage on New Code                 is less than  80.0%
+Duplicated Lines on New Code         is greater than 3.0%
+Maintainability Rating on New Code   is worse than A
+Reliability Rating on New Code       is worse than A
+Security Rating on New Code          is worse than A
+
+[INFO] Quality profile for java: Sonar way
+[INFO] Quality profile for jsp: Sonar way
+[INFO] Quality profile for xml: Sonar way
+
+SonarQube Reports depends on:
+  1. Rules  
+  2. Quality profile
+  3. Quality Gates 
+
+Quality Profiles are collections of rules to apply during an analysis.
+For each language there is a default Quality profile  
+
+Use tokens instead of passwords:
+
+        <properties>
+                <jdk.version>1.8</jdk.version>
+                <spring.version>5.1.2.RELEASE</spring.version>
+                <junit.version>4.11</junit.version>
+                <log4j.version>1.2.17</log4j.version>
+                <sonar.host.url>http://172.31.90.124:9000/</sonar.host.url>
+                <sonar.login>class31</sonar.login>
+                <sonar.password>admin123</sonar.password>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        </properties>
+
+
+
+
+
+token = 0e25e7125d55f2799499cc871be2416d1fd766de 
+userName/Password  
+
+         <properties>
+                <jdk.version>1.8</jdk.version>
+                <spring.version>5.1.2.RELEASE</spring.version>
+                <junit.version>4.11</junit.version>
+                <log4j.version>1.2.17</log4j.version>
+                <sonar.host.url>http://172.31.90.124:9000/</sonar.host.url>
+                <sonar.login>0e25e7125d55f2799499cc871be2416d1fd766de</sonar.login>
+                <!-- <sonar.password>admin123</sonar.password>  --> 
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        </properties>
+
+Background:
+  CodeQuality []  
+
+
+
+SonarCloud = SaaS  
+   https://docs.sonarcloud.io/  
+
+GitHub = 
+
+SonarQube  = IaaS  
+
+Sonarqube 2b  — March 16, 2023
+
+
+Running Background checks  :
+
+sonarQube:
+
+sonarQube2
+==========
+Please watch and practice Sonarqube 2  video above before next class.
+
+SonarQube 2b running notes starts  
+==================================
+
+results:
+Coverage on New Code                 is less than  80.0%
+Duplicated Lines on New Code         is greater than 3.0%
+Maintainability Rating on New Code   is worse than A
+Reliability Rating on New Code       is worse than A
+Security Rating on New Code          is worse than A
+
+[INFO] Quality profile for java: Sonar way
+[INFO] Quality profile for jsp: Sonar way
+[INFO] Quality profile for xml: Sonar way
+
+SonarQube Reports depends on:
+  1. Rules  
+  2. Quality profile
+  3. Quality Gates 
+
+Quality Profiles are collections of rules to apply during an analysis.
+For each language there is a default Quality profile  
+
+Use tokens instead of passwords:
+
+        <properties>
+                <jdk.version>1.8</jdk.version>
+                <spring.version>5.1.2.RELEASE</spring.version>
+                <junit.version>4.11</junit.version>
+                <log4j.version>1.2.17</log4j.version>
+                <sonar.host.url>http://172.31.90.124:9000/</sonar.host.url>
+                <sonar.login>class31</sonar.login>
+                <sonar.password>admin123</sonar.password>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        </properties>
+
+
+
+
+
+token = 0e25e7125d55f2799499cc871be2416d1fd766de 
+userName/Password  
+
+         <properties>
+                <jdk.version>1.8</jdk.version>
+                <spring.version>5.1.2.RELEASE</spring.version>
+                <junit.version>4.11</junit.version>
+                <log4j.version>1.2.17</log4j.version>
+                <sonar.host.url>http://172.31.90.124:9000/</sonar.host.url>
+                <sonar.login>0e25e7125d55f2799499cc871be2416d1fd766de</sonar.login>
+                <!-- <sonar.password>admin123</sonar.password>  --> 
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        </properties>
+
+Background:
+  CodeQuality []  
+
+
+
+SonarCloud = SaaS  
+   https://docs.sonarcloud.io/  
+
+GitHub = 
+
+SonarQube  = IaaS  
+
+Sonarqube 2b  — March 16, 2023
+
+June 9, 2023
+===========
+Watch and practice this video before next class.
+
+
+
+Running Background checks  :
+
+
+sonarQube:
+
+
+
+
+
+
+
+
+
+

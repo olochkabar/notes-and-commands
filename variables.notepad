@@ -1,0 +1,1 @@
+{"bgColorIndex":0,"textColorIndex":1,"note":"\n\nfor a current session of the terminal \n\nto view list of variables : env\n\nto set new variables : VAR_NAME= var_value\n\nto delete a variable: unset VAR_NAME"}
